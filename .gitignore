@@ -1,0 +1,18 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# virtualenv
+.venv
+venv/
+ENV/
+
+# PyCharm
+.idea/
+
+# VSCode
+.vscode/
+
+# Mac OS .DS_Store, which is a file that stores custom attributes of its containing folder
+.DS_Store
