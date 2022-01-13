@@ -12,19 +12,18 @@ class MediaFormat(Enum):
     GIF = auto()
     PNG = auto()
     JPEG = auto()
+    JPG = JPEG
 
     @classmethod
     def from_string(cls, string: str) -> MediaFormat:
-        if string.upper() == "jpg":
-            return cls.JPEG
-        for e in cls:
-            if e.name == string.lower():
-                return e
-        raise ValueError()
+        try:
+            return cls.__members__[string]
+        except KeyError:
+            raise ValueError("Invalid MediaFormat string")
 
     @classmethod
     def formats(cls) -> List[str]:
-        return [e.name for e in cls]
+        return list(cls.__members__.keys())
 
 
 class ReturnType(Enum):

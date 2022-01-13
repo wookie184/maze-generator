@@ -11,9 +11,6 @@ from pyglet import clock, shapes
 from .constants import ColourInfo, MediaFormat, ReturnType, SaveOption, Size, Speed
 from .helpers import MazeGenerator
 
-WINDOW_WIDTH = 700
-WINDOW_HEIGHT = 700
-
 WALL_COLOUR = (0, 0, 0)
 SPACE_COLOUR = (255, 255, 255)
 
@@ -55,8 +52,8 @@ class GridWindow(pyglet.window.Window):  # type:ignore[misc]
         self.grid_width = grid_size.width * 2 + 1
         self.grid_height = grid_size.height * 2 + 1
 
-        square_height = window_size.height / self.grid_height
-        square_width = window_size.width / self.grid_width
+        square_height = self.height / self.grid_height
+        square_width = self.width / self.grid_width
 
         for grid_x in range(self.grid_width):
             for grid_y in range(self.grid_height):
@@ -101,6 +98,7 @@ class GridWindow(pyglet.window.Window):  # type:ignore[misc]
             res = self.grid.step()
             if res == ReturnType.COMPLETED:
                 if self.save_options.format:
+                    self.on_draw()  # Ensure last frame is encluded
                     self.save_result()
                     pyglet.app.exit()
                     break
