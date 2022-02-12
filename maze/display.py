@@ -40,9 +40,9 @@ class GridWindow(pyglet.window.Window):  # type:ignore[misc]
         super().__init__(window_size.width, window_size.height)
 
         self.save_options = save_options
-        if self.save_options.format == MediaFormat.MP4:
+        if self.save_options.format == MediaFormat.GIF:
             self.gif_images: List[Image.Image] = []
-        elif self.save_options.format == MediaFormat.GIF:
+        elif self.save_options.format == MediaFormat.MP4:
             self.mp4_frame = 0
             self.mp4_temp_dir = temp_dir
 
@@ -155,8 +155,12 @@ class GridWindow(pyglet.window.Window):  # type:ignore[misc]
             )
             # fmt: on
         elif self.save_options.format == MediaFormat.GIF:
+            duration = int((1 / self.speed.frames_per_second) * 1000)
             self.gif_images[0].save(
-                "out.gif", save_all=True, append_images=self.gif_images[1:]
+                "out.gif",
+                save_all=True,
+                append_images=self.gif_images[1:],
+                duration=duration,
             )
         elif self.save_options.format == MediaFormat.PNG:
             self.get_screen_as_image().save(f"{self.save_options.path}.png")
