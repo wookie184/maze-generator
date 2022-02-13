@@ -35,7 +35,9 @@ class GridWindow(pyglet.window.Window):  # type:ignore[misc]
         step: int,
         visible: bool = True,
     ):
-        super().__init__(window_size.width, window_size.height, visible=visible)
+        super().__init__(
+            window_size.width, window_size.height, visible=visible
+        )
 
         self.shapes = {}
         self.shape_batch = shapes.Batch()
@@ -130,6 +132,7 @@ class GIFGridWindow(GridWindow):
             save_all=True,
             append_images=self.gif_images[1:],
             duration=self.frame_duration,
+            loop=True,
         )
         pyglet.app.exit()
 

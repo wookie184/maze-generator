@@ -48,7 +48,9 @@ class MazeGenerator:
         if len(self.visited) == self.width * self.height:
             return ReturnType.COMPLETED
         pos = self.stack.popleft()
-        neighbors = [n for n in self.grid.neighbors(pos) if n not in self.visited]
+        neighbors = [
+            n for n in self.grid.neighbors(pos) if n not in self.visited
+        ]
         if not neighbors:
             n = self.stack[0]
             return Return(
