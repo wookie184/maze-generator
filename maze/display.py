@@ -33,6 +33,7 @@ class GridWindow(pyglet.window.Window):  # type:ignore[misc]
         colour_start: int,
         colour_speed: int,
         step: int,
+        seed: int,
         visible: bool = True,
     ):
         super().__init__(
@@ -60,7 +61,7 @@ class GridWindow(pyglet.window.Window):  # type:ignore[misc]
                 )
                 self.shapes[grid_x, grid_y] = square
 
-        self.grid = MazeGenerator(self.grid_width, self.grid_height)
+        self.grid = MazeGenerator(self.grid_width, self.grid_height, seed=seed)
 
         self.pos_colour = colour_cycle(start=colour_start, incr=colour_speed)
         self.step = step
@@ -127,12 +128,14 @@ class GIFGridWindow(GridWindow):
         self.gif_images.append(self.get_screen_as_image())
 
     def on_finish(self):
+        # Sleep for 2 seconds at the end before looping
+        durations = [self.frame_duration] * (len(self.gif_images) - 1) + [2000]
         self.gif_images[0].save(
             self.save_path.with_suffix(".gif"),
             save_all=True,
             append_images=self.gif_images[1:],
-            duration=self.frame_duration,
-            loop=True,
+            duration=durations,
+            loop=0,
         )
         pyglet.app.exit()
 

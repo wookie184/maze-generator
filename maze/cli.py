@@ -78,6 +78,12 @@ MAZE_OPTIONS = [
         type=click.IntRange(0, 255),
         help="The colour to start at as a HSV hue",
     ),
+    click.option(
+        "--seed",
+        "seed",
+        default=-1,
+        help="A seed to determine the maze generated",
+    ),
 ]
 
 SAVE_PATH_OPTION = click.option(
