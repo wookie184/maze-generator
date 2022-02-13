@@ -7,7 +7,7 @@ authors = ["wookie184 <wookie1840@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.7"
 click = "^8.0"
-pyglet = "^1.5"
+pyglet = {git="https://github.com/pyglet/pyglet"}
 networkx = "^2.5"
 Pillow = "^9.0"
 
