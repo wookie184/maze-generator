@@ -25,10 +25,14 @@ def validate_size(value: str) -> Size:
     return Size(width, height)
 
 
-def validate_grid_size(ctx: click.Context, param: click.Parameter, value: str) -> Size:
+def validate_grid_size(
+    ctx: click.Context, param: click.Parameter, value: str
+) -> Size:
     size = validate_size(value)
     if not (2 <= size.width <= 100 and 2 <= size.width <= 100):
-        raise click.BadParameter("Grid height and with must be between 2 and 100")
+        raise click.BadParameter(
+            "Grid height and with must be between 2 and 100"
+        )
     return size
 
 
@@ -37,7 +41,9 @@ def validate_window_size(
 ) -> Size:
     size = validate_size(value)
     if size.width < 150 or size.height < 150:
-        raise click.BadParameter("Window height and width must be greater than 150px")
+        raise click.BadParameter(
+            "Window height and width must be greater than 150px"
+        )
     return size
 
 
@@ -72,13 +78,6 @@ MAZE_OPTIONS = [
         type=click.IntRange(0, 255),
         help="The colour to start at as a HSV hue",
     ),
-    click.option(
-        "--step",
-        "step",
-        default=1,
-        type=click.IntRange(1),
-        help="Number of generation steps per frame",
-    ),
 ]
 
 SAVE_PATH_OPTION = click.option(
@@ -95,21 +94,32 @@ SAVE_PATH_OPTION = click.option(
     help="Path to save to",
 )
 
-DURATION_OPTION = click.option(
-    "--duration",
-    "-d",
-    "frame_duration",
-    default=100,
-    type=click.IntRange(1),
-    help="Duration between frames (ms)",
+ANIMATION_OPTIONS = [
+    click.option(
+        "--duration",
+        "-d",
+        "frame_duration",
+        default=100,
+        type=click.IntRange(1),
+        help="Duration between frames (ms)",
+    ),
+    click.option(
+        "--step",
+        "step",
+        default=1,
+        type=click.IntRange(1),
+        help="Number of generation steps per frame",
+    ),
+]
+
+
+@click.group(
+    invoke_without_command=True,
+    context_settings={"max_content_width": 95},
 )
-
-
-@click.group(invoke_without_command=True, context_settings={"max_content_width": 95})
 @add_options(MAZE_OPTIONS)
-@DURATION_OPTION
+@add_options(ANIMATION_OPTIONS)
 @click.pass_context
-@click.help_option("--help", "-h")
 def maze(ctx, **kwargs):
     if ctx.invoked_subcommand is None:
         display.run(**kwargs)
@@ -117,8 +127,8 @@ def maze(ctx, **kwargs):
 
 @maze.command()
 @add_options(MAZE_OPTIONS)
+@add_options(ANIMATION_OPTIONS)
 @SAVE_PATH_OPTION
-@DURATION_OPTION
 def gif(**kwargs):
     display.save_gif(**kwargs)
 
@@ -127,11 +137,19 @@ def gif(**kwargs):
 @add_options(MAZE_OPTIONS)
 @SAVE_PATH_OPTION
 def png(save_path, **kwargs):
-    display.save_image(save_path=save_path.with_suffix(".png"), **kwargs)
+    display.save_image(
+        save_path=save_path.with_suffix(".png"),
+        step=100_000,
+        **kwargs,
+    )
 
 
 @maze.command()
 @add_options(MAZE_OPTIONS)
 @SAVE_PATH_OPTION
 def bmp(save_path, **kwargs):
-    display.save_image(save_path=save_path.with_suffix(".bmp"), **kwargs)
+    display.save_image(
+        save_path=save_path.with_suffix(".bmp"),
+        step=100_000,
+        **kwargs,
+    )
