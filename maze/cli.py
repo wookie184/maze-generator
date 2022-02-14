@@ -130,6 +130,7 @@ def maze(ctx, window_size, grid_size, **kwargs):
 @add_options(ANIMATION_OPTIONS)
 @click.pass_context
 def view(ctx, **kwargs):
+    """Open a window to show a maze generating."""
     window_size = ctx.obj["window_size"]
     if window_size.width < 150 or window_size.height < 150:
         raise click.BadParameter(
@@ -143,6 +144,7 @@ def view(ctx, **kwargs):
 @SAVE_PATH_OPTION
 @click.pass_context
 def gif(ctx, save_path, **kwargs):
+    """Save an animated GIF of a maze generating."""
     display.save_gif(save_path, **ctx.obj, **kwargs)
     click.echo(f"GIF created at {save_path}")
 
@@ -151,6 +153,7 @@ def gif(ctx, save_path, **kwargs):
 @SAVE_PATH_OPTION
 @click.pass_context
 def png(ctx, save_path, **kwargs):
+    """Save a PNG of a generated maze."""
     save_path = save_path.with_suffix(".png")
     display.save_image(
         save_path,
@@ -165,6 +168,7 @@ def png(ctx, save_path, **kwargs):
 @SAVE_PATH_OPTION
 @click.pass_context
 def bmp(ctx, save_path, **kwargs):
+    """Save a BMP of a generated maze."""
     save_path = save_path.with_suffix(".bmp")
     display.save_image(
         save_path,
