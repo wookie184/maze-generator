@@ -128,6 +128,10 @@ class GIFGridWindow(GridWindow):
         self.gif_images.append(self.get_screen_as_image())
 
     def on_finish(self):
+        # Ensure the last frame is included
+        self.on_draw()
+        self.gif_images.append(self.get_screen_as_image())
+
         # Sleep for 2 seconds at the end before looping
         durations = [self.frame_duration] * (len(self.gif_images) - 1) + [2000]
         self.gif_images[0].save(

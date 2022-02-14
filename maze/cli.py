@@ -15,36 +15,18 @@ def add_options(options):
     return _add_options
 
 
-def validate_size(value: str) -> Size:
+def validate_size(
+    ctx: click.Context, param: click.Parameter, value: str
+) -> Size:
     try:
         width, _, height = value.partition("x")
         width, height = int(width), int(height)
     except ValueError:
         raise click.BadParameter("Format must be WIDTHxHEIGHT, e.g. 100x50")
 
+    if not (2 <= width and 2 <= width):
+        raise click.BadParameter("height and width must be greater than 1")
     return Size(width, height)
-
-
-def validate_grid_size(
-    ctx: click.Context, param: click.Parameter, value: str
-) -> Size:
-    size = validate_size(value)
-    if not (2 <= size.width <= 100 and 2 <= size.width <= 100):
-        raise click.BadParameter(
-            "Grid height and with must be between 2 and 100"
-        )
-    return size
-
-
-def validate_window_size(
-    ctx: click.Context, param: click.Parameter, value: str
-) -> Size:
-    size = validate_size(value)
-    if size.width < 150 or size.height < 150:
-        raise click.BadParameter(
-            "Window height and width must be greater than 150px"
-        )
-    return size
 
 
 MAZE_OPTIONS = [
@@ -52,29 +34,29 @@ MAZE_OPTIONS = [
         "--window-size",
         "-w",
         "window_size",
-        default="700x600",
-        callback=validate_window_size,
+        default="620x620",
+        callback=validate_size,
         help="Size of the window, e.g. 100x200",
     ),
     click.option(
         "--grid-size",
         "-g",
         "grid_size",
-        default="10x10",
-        callback=validate_grid_size,
+        default="15x15",
+        callback=validate_size,
         help="Dimensions of the grid, e.g. 10x10",
     ),
     click.option(
         "--colour-speed",
         "colour_speed",
-        default=1,
+        default=0.5,
         type=click.FloatRange(0, 255),
         help="Colour change as HSV hue per generation step",
     ),
     click.option(
         "--start-colour",
         "colour_start",
-        default=0,
+        default=100,
         type=click.IntRange(0, 255),
         help="The colour to start at as a HSV hue",
     ),
@@ -105,7 +87,7 @@ ANIMATION_OPTIONS = [
         "--duration",
         "-d",
         "frame_duration",
-        default=100,
+        default=40,
         type=click.IntRange(1),
         help="Duration between frames (ms)",
     ),
@@ -119,43 +101,75 @@ ANIMATION_OPTIONS = [
 ]
 
 
-@click.group(
-    invoke_without_command=True,
-    context_settings={"max_content_width": 95},
-)
+@click.group(context_settings={"max_content_width": 95})
 @add_options(MAZE_OPTIONS)
+@click.pass_context
+def maze(ctx, window_size, grid_size, **kwargs):
+    if grid_size.width * 2 + 1 > window_size.width:
+        raise click.BadParameter(
+            "window/image width is too small for that grid width"
+        )
+    if grid_size.height * 2 + 1 > window_size.height:
+        raise click.BadParameter(
+            "window/image height is too small for that grid height"
+        )
+
+    if (
+        window_size.width % (grid_size.width * 2 + 1) != 0
+        or window_size.height % (grid_size.height * 2 + 1) != 0
+    ):
+        click.echo(
+            "Note: It is recommended that window size "
+            "is a multiple of 2*grid_size+1"
+        )
+
+    ctx.obj = {"window_size": window_size, "grid_size": grid_size, **kwargs}
+
+
+@maze.command()
 @add_options(ANIMATION_OPTIONS)
 @click.pass_context
-def maze(ctx, **kwargs):
-    if ctx.invoked_subcommand is None:
-        display.run(**kwargs)
+def view(ctx, **kwargs):
+    window_size = ctx.obj["window_size"]
+    if window_size.width < 150 or window_size.height < 150:
+        raise click.BadParameter(
+            "Window height and width must be greater than 150px"
+        )
+    display.run(**ctx.obj, **kwargs)
 
 
 @maze.command()
-@add_options(MAZE_OPTIONS)
 @add_options(ANIMATION_OPTIONS)
 @SAVE_PATH_OPTION
-def gif(**kwargs):
-    display.save_gif(**kwargs)
+@click.pass_context
+def gif(ctx, save_path, **kwargs):
+    display.save_gif(save_path, **ctx.obj, **kwargs)
+    click.echo(f"GIF created at {save_path}")
 
 
 @maze.command()
-@add_options(MAZE_OPTIONS)
 @SAVE_PATH_OPTION
-def png(save_path, **kwargs):
+@click.pass_context
+def png(ctx, save_path, **kwargs):
+    save_path = save_path.with_suffix(".png")
     display.save_image(
-        save_path=save_path.with_suffix(".png"),
+        save_path,
         step=100_000,
+        **ctx.obj,
         **kwargs,
     )
+    click.echo(f"PNG created at {save_path}")
 
 
 @maze.command()
-@add_options(MAZE_OPTIONS)
 @SAVE_PATH_OPTION
-def bmp(save_path, **kwargs):
+@click.pass_context
+def bmp(ctx, save_path, **kwargs):
+    save_path = save_path.with_suffix(".bmp")
     display.save_image(
-        save_path=save_path.with_suffix(".bmp"),
+        save_path,
         step=100_000,
+        **ctx.obj,
         **kwargs,
     )
+    click.echo(f"BMP created at {save_path}")
