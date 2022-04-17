@@ -48,13 +48,15 @@ MAZE_OPTIONS = [
     ),
     click.option(
         "--colour-speed",
+        "-v",
         "colour_speed",
         default=0.5,
-        type=click.FloatRange(0, 255),
+        type=click.FloatRange(0.0, 255.0),
         help="Colour change as HSV hue per generation step",
     ),
     click.option(
         "--start-colour",
+        "-c",
         "colour_start",
         default=100,
         type=click.IntRange(0, 255),
@@ -62,6 +64,7 @@ MAZE_OPTIONS = [
     ),
     click.option(
         "--seed",
+        "-s",
         "seed",
         default=-1,
         help="A seed to determine the maze generated",
@@ -69,7 +72,7 @@ MAZE_OPTIONS = [
 ]
 
 SAVE_PATH_OPTION = click.option(
-    "--save-path",
+    "--out",
     "save_path",
     type=click.Path(
         exists=False,
@@ -107,11 +110,13 @@ ANIMATION_OPTIONS = [
 def maze(ctx, window_size, grid_size, **kwargs):
     if grid_size.width * 2 + 1 > window_size.width:
         raise click.BadParameter(
-            "window/image width is too small for that grid width"
+            "window/image width is too small for that grid width. "
+            "Must be at least 2*grid_width+1"
         )
     if grid_size.height * 2 + 1 > window_size.height:
         raise click.BadParameter(
-            "window/image height is too small for that grid height"
+            "window/image height is too small for that grid height. "
+            "Must be at least 2*grid_height+1"
         )
 
     if (
@@ -145,6 +150,7 @@ def view(ctx, **kwargs):
 @click.pass_context
 def gif(ctx, save_path, **kwargs):
     """Save an animated GIF of a maze generating."""
+    save_path = save_path.with_suffix(".gif")
     display.save_gif(save_path, **ctx.obj, **kwargs)
     click.echo(f"GIF created at {save_path}")
 
@@ -157,7 +163,7 @@ def png(ctx, save_path, **kwargs):
     save_path = save_path.with_suffix(".png")
     display.save_image(
         save_path,
-        step=100_000,
+        step=None,
         **ctx.obj,
         **kwargs,
     )
@@ -172,7 +178,7 @@ def bmp(ctx, save_path, **kwargs):
     save_path = save_path.with_suffix(".bmp")
     display.save_image(
         save_path,
-        step=100_000,
+        step=None,
         **ctx.obj,
         **kwargs,
     )

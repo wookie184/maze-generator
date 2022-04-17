@@ -1,6 +1,7 @@
 from colorsys import hsv_to_rgb
+import itertools
 from pathlib import Path
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Optional, Tuple
 
 import pyglet
 from PIL import Image
@@ -32,7 +33,7 @@ class GridWindow(pyglet.window.Window):  # type:ignore[misc]
         window_size: Size,
         colour_start: int,
         colour_speed: int,
-        step: int,
+        step: Optional[int],
         seed: int,
         visible: bool = True,
     ):
@@ -82,7 +83,8 @@ class GridWindow(pyglet.window.Window):  # type:ignore[misc]
             self.shapes[edge].color = WALL_COLOUR
 
     def on_tick(self, _dt: int) -> None:
-        for _ in range(self.step):
+        loop_iter = range(self.step) if self.step else itertools.count()
+        for _ in loop_iter:
             res = self.grid.step()
             if res == ReturnType.COMPLETED:
                 self.on_finish()
@@ -135,7 +137,7 @@ class GIFGridWindow(GridWindow):
         # Sleep for 2 seconds at the end before looping
         durations = [self.frame_duration] * (len(self.gif_images) - 1) + [2000]
         self.gif_images[0].save(
-            self.save_path.with_suffix(".gif"),
+            self.save_path,
             save_all=True,
             append_images=self.gif_images[1:],
             duration=durations,
