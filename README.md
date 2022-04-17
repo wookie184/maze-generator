@@ -8,27 +8,25 @@ Has support for viewing generation in a window using pyglet, or saving as a GIF.
 
 
 ### Usage
+```
 Usage: python -m maze [OPTIONS] COMMAND [ARGS]...
 
 Options:
-  -w, --window-size TEXT        Size of the window, e.g.
-                                100x200
-  -g, --grid-size TEXT          Dimensions of the grid, e.g.
-                                10x10
-  --colour-speed FLOAT RANGE    Colour change as HSV hue per
-                                generation step  [0<=x<=255]
-  --start-colour INTEGER RANGE  The colour to start at as a
-                                HSV hue  [0<=x<=255]
-  --seed INTEGER                A seed to determine the maze
-                                generated
-  --help                        Show this message and exit.
+  -w, --window-size TEXT          Size of the window, e.g. 100x200
+  -g, --grid-size TEXT            Dimensions of the grid, e.g. 10x10
+  -v, --colour-speed FLOAT RANGE  Colour change as HSV hue per generation step
+                                  [0.0<=x<=255.0]
+  -c, --start-colour INTEGER RANGE
+                                  The colour to start at as a HSV hue  [0<=x<=255]
+  -s, --seed INTEGER              A seed to determine the maze generated
+  --help                          Show this message and exit.
 
 Commands:
   bmp   Save a BMP of a generated maze.
   gif   Save an animated GIF of a maze generating.
   png   Save a PNG of a generated maze.
   view  Open a window to show a maze generating.
-
+```
 
 Command specific options can be found by running the help commands for the respective command.
 
