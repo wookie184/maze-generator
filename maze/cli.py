@@ -1,97 +1,79 @@
 import pathlib
-from typing import Optional
 
 import click
 
 from . import display
-from .constants import ColourInfo, MediaFormat, SaveOption, Size, Speed
+from .constants import Size
 
 
-def to_mediaformat(
-    ctx: click.Context, param: click.Parameter, value: Optional[str]
-) -> Optional[MediaFormat]:
-    if value is None:
-        return None
+def add_options(options):
+    def _add_options(func):
+        for option in reversed(options):
+            func = option(func)
+        return func
 
-    return MediaFormat.from_string(value)
+    return _add_options
 
 
-def validate_size(value: str) -> Size:
+def validate_size(
+    ctx: click.Context, param: click.Parameter, value: str
+) -> Size:
     try:
         width, _, height = value.partition("x")
         width, height = int(width), int(height)
     except ValueError:
         raise click.BadParameter("Format must be WIDTHxHEIGHT, e.g. 100x50")
 
+    if not (2 <= width and 2 <= width):
+        raise click.BadParameter("height and width must be greater than 1")
     return Size(width, height)
 
 
-def validate_grid_size(ctx: click.Context, param: click.Parameter, value: str) -> Size:
-    size = validate_size(value)
-    if not (2 <= size.width <= 100 and 2 <= size.width <= 100):
-        raise click.BadParameter("Grid height and with must be between 2 and 100")
-    return size
-
-
-def validate_window_size(
-    ctx: click.Context, param: click.Parameter, value: str
-) -> Size:
-    size = validate_size(value)
-    if size.width < 150 or size.height < 150:
-        raise click.BadParameter("Window height and width must be greater than 150px")
-    return size
-
-
-@click.command("Maze Generator", context_settings={"max_content_width": 110})
-@click.option(
-    "--grid-size",
-    "-g",
-    default="10x10",
-    callback=validate_grid_size,
-    help="The dimensions of the maze grid, e.g. 10x10",
-)
-@click.option(
-    "--window-size",
-    "-w",
-    default="700x600",
-    callback=validate_window_size,
-    help="The resolution of the window, e.g. 100x200",
-)
-@click.option(
-    "--colour-speed",
-    "-c",
-    default=10,
-    help="The speed the colour changes. Enter 0 for no colour change",
-)
-@click.option(
-    "--start-colour",
-    default=0,
-    help="The colour to start at, given as a HSV hue between 0 and 255",
-)
-@click.option(
-    "--frames-per-second",
-    "-fps",
-    default=20,
-    help="Number of updates per second to aim for",
-)
-@click.option(
-    "--steps-per-frame", "-spf", default=1, help="Number of steps to make per frame"
-)
-@click.option(
-    "--save-format",
-    type=click.Choice(MediaFormat.formats(), case_sensitive=False),
-    callback=to_mediaformat,
-    default=None,
-    show_default=True,
-    help=(
-        "Save the maze generation in the format passed. Nothing is saved by default. "
-        "Video formats will save an animation, while image formats save the final frame. "
-        "Using this option will run the live animation at maximum speed, and the -fps argument "
-        "will be used for the video fps"
+MAZE_OPTIONS = [
+    click.option(
+        "--window-size",
+        "-w",
+        "window_size",
+        default="620x620",
+        callback=validate_size,
+        help="Size of the window, e.g. 100x200",
     ),
-)
-@click.option(
-    "--save-path",
+    click.option(
+        "--grid-size",
+        "-g",
+        "grid_size",
+        default="15x15",
+        callback=validate_size,
+        help="Dimensions of the grid, e.g. 10x10",
+    ),
+    click.option(
+        "--colour-speed",
+        "-v",
+        "colour_speed",
+        default=0.5,
+        type=click.FloatRange(0.0, 255.0),
+        help="Colour change as HSV hue per generation step",
+    ),
+    click.option(
+        "--start-colour",
+        "-c",
+        "colour_start",
+        default=100,
+        type=click.IntRange(0, 255),
+        help="The colour to start at as a HSV hue",
+    ),
+    click.option(
+        "--seed",
+        "-s",
+        "seed",
+        default=-1,
+        help="A seed to determine the maze generated",
+    ),
+]
+
+SAVE_PATH_OPTION = click.option(
+    "--out",
+    "save_path",
     type=click.Path(
         exists=False,
         dir_okay=False,
@@ -100,27 +82,104 @@ def validate_window_size(
         path_type=pathlib.Path,
     ),
     default=pathlib.Path.cwd().absolute() / "out",
-    help="Choose path to save ",
+    help="Path to save to",
 )
-@click.help_option("--help", "-h")
-def maze_generator(
-    grid_size: Size,
-    window_size: Size,
-    colour_speed: float,
-    start_colour: int,
-    frames_per_second: int,
-    steps_per_frame: int,
-    save_format: MediaFormat,
-    save_path: pathlib.Path,
-) -> None:
 
-    colour_speed = 1 / colour_speed
-    display.run(
-        grid_size=grid_size,
-        window_size=window_size,
-        colour_info=ColourInfo(start=start_colour, speed=colour_speed),
-        save_option=SaveOption(format=save_format, path=save_path),
-        speed=Speed(
-            frames_per_second=frames_per_second, steps_per_frame=steps_per_frame
-        ),
+ANIMATION_OPTIONS = [
+    click.option(
+        "--duration",
+        "-d",
+        "frame_duration",
+        default=40,
+        type=click.IntRange(1),
+        help="Duration between frames (ms)",
+    ),
+    click.option(
+        "--step",
+        "step",
+        default=1,
+        type=click.IntRange(1),
+        help="Number of generation steps per frame",
+    ),
+]
+
+
+@click.group(context_settings={"max_content_width": 95})
+@add_options(MAZE_OPTIONS)
+@click.pass_context
+def maze(ctx, window_size, grid_size, **kwargs):
+    if grid_size.width * 2 + 1 > window_size.width:
+        raise click.BadParameter(
+            "window/image width is too small for that grid width. "
+            "Must be at least 2*grid_width+1"
+        )
+    if grid_size.height * 2 + 1 > window_size.height:
+        raise click.BadParameter(
+            "window/image height is too small for that grid height. "
+            "Must be at least 2*grid_height+1"
+        )
+
+    if (
+        window_size.width % (grid_size.width * 2 + 1) != 0
+        or window_size.height % (grid_size.height * 2 + 1) != 0
+    ):
+        click.echo(
+            "Note: It is recommended that window size "
+            "is a multiple of 2*grid_size+1"
+        )
+
+    ctx.obj = {"window_size": window_size, "grid_size": grid_size, **kwargs}
+
+
+@maze.command()
+@add_options(ANIMATION_OPTIONS)
+@click.pass_context
+def view(ctx, **kwargs):
+    """Open a window to show a maze generating."""
+    window_size = ctx.obj["window_size"]
+    if window_size.width < 150 or window_size.height < 150:
+        raise click.BadParameter(
+            "Window height and width must be greater than 150px"
+        )
+    display.run(**ctx.obj, **kwargs)
+
+
+@maze.command()
+@add_options(ANIMATION_OPTIONS)
+@SAVE_PATH_OPTION
+@click.pass_context
+def gif(ctx, save_path, **kwargs):
+    """Save an animated GIF of a maze generating."""
+    save_path = save_path.with_suffix(".gif")
+    display.save_gif(save_path, **ctx.obj, **kwargs)
+    click.echo(f"GIF created at {save_path}")
+
+
+@maze.command()
+@SAVE_PATH_OPTION
+@click.pass_context
+def png(ctx, save_path, **kwargs):
+    """Save a PNG of a generated maze."""
+    save_path = save_path.with_suffix(".png")
+    display.save_image(
+        save_path,
+        step=None,
+        **ctx.obj,
+        **kwargs,
     )
+    click.echo(f"PNG created at {save_path}")
+
+
+@maze.command()
+@SAVE_PATH_OPTION
+@click.pass_context
+def bmp(ctx, save_path, **kwargs):
+    """Save a BMP of a generated maze."""
+    save_path = save_path.with_suffix(".bmp")
+    display.save_image(
+        save_path,
+        step=None,
+        **ctx.obj,
+        **kwargs,
+    )
+    click.echo(f"BMP created at {save_path}")

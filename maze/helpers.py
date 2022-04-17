@@ -37,18 +37,25 @@ def to_grid_coords(node: EdgeType) -> EdgeType:
 
 
 class MazeGenerator:
-    def __init__(self, width: int, height: int):
+    def __init__(self, width: int, height: int, seed: int = -1):
         self.width = width // 2 + 1
         self.height = height // 2 + 1
         self.grid = create_grid(self.width, self.height)
         self.visited = set(((0, 0),))
         self.stack = deque(((0, 0),))
 
+        if seed == -1:
+            self.random = random.Random()
+        else:
+            self.random = random.Random(seed)
+
     def step(self) -> Union[Literal[ReturnType.COMPLETED], Return]:
         if len(self.visited) == self.width * self.height:
             return ReturnType.COMPLETED
         pos = self.stack.popleft()
-        neighbors = [n for n in self.grid.neighbors(pos) if n not in self.visited]
+        neighbors = [
+            n for n in self.grid.neighbors(pos) if n not in self.visited
+        ]
         if not neighbors:
             n = self.stack[0]
             return Return(
@@ -56,7 +63,7 @@ class MazeGenerator:
                 (to_grid_coords(pos), get_middle((pos, n)), to_grid_coords(n)),
             )
 
-        n = random.choice(neighbors)
+        n = self.random.choice(neighbors)
         self.stack.appendleft(pos)
         self.stack.appendleft(n)
         self.visited.add(n)

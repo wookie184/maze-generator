@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "Maze Generator"
-version = "0.1.0"
+version = "0.1.1"
 description = "Maze generator built in python using networkx and pyglet"
 authors = ["wookie184 <wookie1840@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
 click = "^8.0"
-pyglet = "^1.5"
+pyglet = {git="https://github.com/pyglet/pyglet"}
 networkx = "^2.5"
 Pillow = "^9.0"
 
@@ -15,8 +15,8 @@ Pillow = "^9.0"
 poethepoet = "^0.10.0"
 pre-commit = "^2.13.0"
 
-[tool.flake8]
-max_line_length=110
+[tool.black]
+line-length = 79
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
