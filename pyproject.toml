@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "Maze Generator"
-version = "0.1.0"
+version = "0.1.1"
 description = "Maze generator built in python using networkx and pyglet"
 authors = ["wookie184 <wookie1840@gmail.com>"]
 
