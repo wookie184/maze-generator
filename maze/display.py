@@ -16,14 +16,14 @@ SPACE_COLOUR = (255, 255, 255)
 
 def colour_cycle(
     start: float = 0, incr: float = 0.01, *, s: float = 255, v: float = 255
-) -> Iterator[Tuple[float, ...]]:
+) -> Iterator[Tuple[int, int, int]]:
     """Return an iterator of smoothly changing rgb colours."""
     start, incr, s, v = start / 255, incr / 255, s / 255, v / 255
     h = start
     while True:
         h += incr
         h %= 1
-        yield tuple(i * 255 for i in hsv_to_rgb(h, s, v))
+        yield tuple(int(i * 255) for i in hsv_to_rgb(h, s, v))
 
 
 class GridWindow(pyglet.window.Window):  # type:ignore[misc]
@@ -41,7 +41,7 @@ class GridWindow(pyglet.window.Window):  # type:ignore[misc]
             window_size.width, window_size.height, visible=visible
         )
 
-        self.shapes = {}
+        self.shapes: dict[tuple[int, int], shapes.Rectangle] = {}
         self.shape_batch = shapes.Batch()
 
         self.grid_width = grid_size.width * 2 + 1
